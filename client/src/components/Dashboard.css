@@ -1,0 +1,18 @@
+.league-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.league-item img {
+    margin-right: 10px;
+    width: 50px;
+    /* Adjust the size of the logo as needed */
+    height: 50px;
+    object-fit: cover;
+    /* Ensures the image covers the entire area */
+}
+
+.league-item h2 {
+    margin: 0;
+}
