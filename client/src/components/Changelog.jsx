@@ -49,6 +49,16 @@ const changelogData = [
             'Add award "breakdown" that shows a line graph for each awards.'
         ],
     },
+    {
+        version: '0.6.0-beta',
+        date: '2025-11-25',
+        changes: [
+            'Add four new awards for Yahoo leagues: Goose Egg Collector (Most Zero Points or Below), Interception King, Fumble Lost, Waiver Wire Warrior.',
+            'Added new Insight view.',
+            'Added new export to image button.',
+            'Small improvements to week view navigation.'
+        ],
+    },
 ];
 
 const Changelog = () => {
