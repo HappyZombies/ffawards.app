@@ -124,31 +124,64 @@ const Awards = () => {
             {league && <Typography variant="h4" gutterBottom textAlign="center">{league.name}</Typography>}
 
             {awards?.length > 0 && (
-                <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mt: '1rem', mb: '1rem' }}>
-                    <ToggleButtonGroup value={tab} exclusive onChange={(_, v) => v && setTab(v)} aria-label="tab">
-                        <ToggleButton value="insights">Insights</ToggleButton>
-                        <ToggleButton value="breakdown">Breakdown</ToggleButton>
-                    </ToggleButtonGroup>
+                <Box display="flex" flexDirection="column" gap={2} sx={{ mt: '1rem', mb: '1rem' }}>
 
-                    <Box display="flex" gap={2} alignItems="center">
-                        <ToggleButtonGroup value={viewMode} exclusive onChange={(_, v) => v && setViewMode(v)} aria-label="view mode">
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                        <ToggleButtonGroup value={tab} exclusive onChange={(_, v) => v && setTab(v)}>
+                            <ToggleButton value="insights">Insights</ToggleButton>
+                            <ToggleButton value="breakdown">Breakdown</ToggleButton>
+                        </ToggleButtonGroup>
+
+                        <ToggleButtonGroup value={viewMode} exclusive onChange={(_, v) => v && setViewMode(v)}>
                             <ToggleButton value="cumulative">Cumulative</ToggleButton>
                             <ToggleButton value="weekly">Weekly</ToggleButton>
                         </ToggleButtonGroup>
+                    </Box>
+
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
                         {viewMode === 'weekly' && (
-                            <Select value={selectedWeek} onChange={e => setSelectedWeek(e.target.value)} displayEmpty sx={{ minWidth: 150 }}>
-                                {allWeeks.map(week => <MenuItem key={week} value={week}>Week {week}</MenuItem>)}
-                            </Select>
+                            <Box display="flex" alignItems="center" gap={1}>
+                                <Button
+                                    variant="outlined"
+                                    onClick={() => {
+                                        const idx = allWeeks.indexOf(selectedWeek);
+                                        if (idx > 0) setSelectedWeek(allWeeks[idx - 1]);
+                                    }}
+                                    disabled={allWeeks.indexOf(selectedWeek) === 0}
+                                >
+                                    {'<'}
+                                </Button>
+
+                                <Select
+                                    value={selectedWeek}
+                                    onChange={e => setSelectedWeek(e.target.value)}
+                                    sx={{ minWidth: 120 }}
+                                >
+                                    {allWeeks.map(w => <MenuItem key={w} value={w}>Week {w}</MenuItem>)}
+                                </Select>
+
+                                <Button
+                                    variant="outlined"
+                                    onClick={() => {
+                                        const idx = allWeeks.indexOf(selectedWeek);
+                                        if (idx < allWeeks.length - 1) setSelectedWeek(allWeeks[idx + 1]);
+                                    }}
+                                    disabled={allWeeks.indexOf(selectedWeek) === allWeeks.length - 1}
+                                >
+                                    {'>'}
+                                </Button>
+                            </Box>
                         )}
+
                         {tab === 'insights' && (
-                            <>
+                            <Box display="flex" gap={1}>
                                 <Button variant="outlined" onClick={exportInsightsPNG}>Export PNG</Button>
-                                <Button variant="outlined" onClick={exportInsightsPDF}>Export PDF</Button>
-                            </>
+                            </Box>
                         )}
                     </Box>
                 </Box>
             )}
+
 
             {!league?.is_finished && awards?.length > 0 && (
                 <>
