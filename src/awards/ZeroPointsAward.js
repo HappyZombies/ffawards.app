@@ -2,6 +2,7 @@ const { setupLoggerWrapper } = require("../services/LoggerService");
 const SleeperService = require("../services/SleeperService");
 const { POSITION_MAP } = require("../utils/espnConstants");
 const BaseAward = require("./BaseAward");
+const YahooService = require("../services/YahooService");
 const { mapTeam, mapRoster } = require("yahoo-fantasy").teamHelper;
 
 // TODO: In theory, this award COULD just be a generic "MostPointsAward" that takes a position as a parameter, have one loop that iterates and does the calculation, and then just returns the result.
@@ -36,7 +37,7 @@ class ZeroPointsAward extends BaseAward {
         return new ZeroPointsAward(this.title, this.position, this.displayOrder).setId(this.id).setDataSet(this.result).setProvider(this.provider).setLeagueId(this.leagueId);
     }
 
-    _calculateYahooAward = (tid) => {
+    _calculateYahooAward = async (tid) => {
         const logger = setupLoggerWrapper(tid, "_calculateYahooAward", { __filename });
         logger.debug({ leagueId: this.leagueId }, "Generating Most Points Award.");
 
@@ -44,12 +45,16 @@ class ZeroPointsAward extends BaseAward {
         const accumulativeTotalWeekly = {};
         const playersAccumulativeTotal = {};
 
+        const teams = await YahooService.yf.league.teams(this.leagueId);
+        const currentNflWeek = parseInt(teams.current_week);
+
         for (let index = 0; index < this.result.length; index++) {
             const team = mapTeam(this.result[index].fantasy_content.team[0]);
             const teamKey = team.team_key;
             const mappedRoster = mapRoster(this.result[index].fantasy_content.team[1].roster);
             team.roster = mappedRoster;
             const currentWeek = this.result[index].fantasy_content.team[1].roster.week;
+            const currentWeekInt = parseInt(currentWeek);
 
             if (!totalPoints[teamKey]) {
                 totalPoints[teamKey] = { total: 0, teamName: team.name };
@@ -66,7 +71,13 @@ class ZeroPointsAward extends BaseAward {
                 const player = team.roster[j];
                 if (player.selected_position !== "BN" && player.selected_position !== "IR") {
                     const playerPoints = parseFloat(player.player_points.total, 10);
+
                     if (playerPoints <= 0) {
+                        // this is below zero, but is it the current week and the game hasn't even started yet? skip
+                        const { opponent } = player.player_schedule.opponents[currentWeekInt - 1];
+                        if (currentNflWeek === opponent.week && !(opponent.team_game_status.trim().toLowerCase().startsWith('final'))) {
+                            break;
+                        }
                         totalPoints[teamKey].total += 1;
                         accumulativeTotalWeekly[currentWeek][teamKey].total += 1;
 

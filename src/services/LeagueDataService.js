@@ -82,8 +82,8 @@ class LeagueDataService {
             currentWeek = 18;
         }
         for (let week = 1; week <= currentWeek; week++) {
-           promiseArrayMatchups.push(limit(() => SleeperService.fetchMatchups(tid, leagueKey, week)));
-           promiseArrayStats.push(limit(() => SleeperService.fetchPlayerStats(tid, week)));
+            promiseArrayMatchups.push(limit(() => SleeperService.fetchMatchups(tid, leagueKey, week)));
+            promiseArrayStats.push(limit(() => SleeperService.fetchPlayerStats(tid, week)));
         }
         const allStats = await Promise.all(promiseArrayStats);
         // i don't like this, we need the matchups to include the weeks somehow
@@ -114,10 +114,10 @@ class LeagueDataService {
 
         const { default: pLimit } = await import("p-limit");
         const limit = pLimit(5);
-        
+
         logger.trace("Fetching teams from Yahoo service.");
         const teams = await YahooService.yf.league.teams(leagueKey);
-        logger.info("Fetching teams from Yahoo service.", { leagueKey, scoring_type: teams.scoring_type  });
+        logger.info("Fetching teams from Yahoo service.", { leagueKey, scoring_type: teams.scoring_type });
         if (teams.draft_status === "predraft") {
             logger.error({ leagueKey }, "League has not drafted yet.");
             throw new ApiError("This league has not drafted yet.");
@@ -133,7 +133,7 @@ class LeagueDataService {
         for (let i = 0; i < teamKeys.length; i++) {
             const teamKey = teamKeys[i];
             for (let week = 1; week <= currentWeek; week++) {
-                promiseArray.push(limit(() => YahooService.yf.api(YahooService.yf.GET, `https://fantasysports.yahooapis.com/fantasy/v2/team/${teamKey}/roster;week=${week}/players/stats;type=week;week=${week}`)));
+                promiseArray.push(limit(() => YahooService.yf.api(YahooService.yf.GET, `https://fantasysports.yahooapis.com/fantasy/v2/team/${teamKey}/roster;week=${week}/players;out=schedule/stats;type=week;week=${week}`)));
             }
         }
 
