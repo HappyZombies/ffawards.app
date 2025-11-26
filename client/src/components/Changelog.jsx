@@ -56,7 +56,9 @@ const changelogData = [
             'Add four new awards for Yahoo leagues: Goose Egg Collector (Most Zero Points or Below), Interception King, Fumble Lost, Waiver Wire Warrior.',
             'Added new Insight view.',
             'Added new export to image button.',
-            'Small improvements to week view navigation.'
+            'Small improvements to week view navigation.',
+            'Added Share Results Copy & Paste Text',
+            'Added Public Share Link Page',
         ],
     },
 ];

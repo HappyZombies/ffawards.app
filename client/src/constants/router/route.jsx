@@ -10,6 +10,7 @@ import Changelog from "../../components/Changelog";
 import Privacy from "../../components/Privacy";
 import SleeperLogin from "../../components/SleeperLogin";
 import ESPNLogin from "../../components/ESPNLogin";
+import ShareAwards from "../../components/ShareAwards";
 
 export const ROUTES = [
   {
@@ -35,6 +36,10 @@ export const ROUTES = [
   {
     path: "/dashboard/leagues/:league_key/awards",
     element: <Awards />,
+  },
+  {
+    path: "/s/:share_id",
+    element: <ShareAwards />,
   },
   {
     path: "/settings",

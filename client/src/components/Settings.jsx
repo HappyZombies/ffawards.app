@@ -101,7 +101,7 @@ function Settings() {
 
             <Divider sx={{ mt: 2, mb: 2 }} />
             <Typography variant="body2" color='white' gutterBottom>
-                Version: <Link to="/changelog">0.5.0</Link>
+                Version: <Link to="/changelog">0.6.0-beta</Link>
             </Typography>
             <Modal
                 open={open}

@@ -1,6 +1,6 @@
 {
   "name": "ffseasonreport",
-  "version": "0.7.0",
+  "version": "0.6.0-beta",
   "main": "index.js",
   "scripts": {
     "dev": "node --watch --env-file=.env ./src/app.dev.js | pino-pretty --singleLine --levelFirst --crlf",
@@ -17,6 +17,7 @@
     "axios": "^1.7.7",
     "cookie-parser": "^1.4.6",
     "express": "^4.19.2",
+    "express-rate-limit": "^8.2.1",
     "http-status-codes": "^2.3.0",
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",

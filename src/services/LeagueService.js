@@ -1,5 +1,6 @@
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
-const { QueryCommand, DeleteCommand, BatchWriteCommand, DynamoDBDocumentClient } = require("@aws-sdk/lib-dynamodb");
+const { randomBytes, createHash } = require('crypto');
+const { QueryCommand, DeleteCommand, BatchWriteCommand, DynamoDBDocumentClient, UpdateCommand, GetCommand } = require("@aws-sdk/lib-dynamodb");
 
 const { ApiError, ApplicationError } = require("../errors");
 const { setupLoggerWrapper } = require("./LoggerService");
@@ -13,43 +14,45 @@ class LeagueService {
         this.dynamoDocClient = DynamoDBDocumentClient.from(client);
     }
 
-    
     async storeESPNLeague(tid, userPK, leagueData, provider) {
         // for the league id, just do a PUT, it will overwrite the existing league if it exists.
         const logger = setupLoggerWrapper(tid, "league", { __filename });
         try {
             if (leagueData) {
                 logger.debug({ leagueData }, "Creating league in database for sleeper.");
-                    // TODO/NOTE: Problem, the id doesn't change per season, so the SK needs to include the season as well. For now I won't do anything since we are only storing the current season anyways.
-                    // It's not a problem today, but it will be in the future -- say in 2025 when we have multiple seasons, we will essentially replace the league data every year. But is this fine? I suppose people won't care about the previous season anymore unless they really do.
-                    const SK = generateLeagueEntitySK(provider, leagueData.id);
-                    const putRequests = [{
-                        PutRequest: {
-                            Item: {
-                                PK: userPK,
-                                SK,
-                                entity_type: "league",
-                                provider,
-                                created_at: new Date().toISOString(),
-                                end_week: 17, // assuming this
-                                logo_url: null, // I think there's a logo but idk where it is
-                                is_finished: false, // TODO: Probably need a way to calculate this
-                                league_id: leagueData.id,
-                                league_key: leagueData.id,
-                                season: leagueData.seasonId,
-                                name: leagueData.settings.name,
-                                league_type: "public", // we know it's public now but that will change when we add private support
-                                current_week: 0, // we don't really use it anyways since we just pull it from the API on request anyways when generating awards
-                            }
+                // TODO/NOTE: Problem, the id doesn't change per season, so the SK needs to include the season as well. For now I won't do anything since we are only storing the current season anyways.
+                // It's not a problem today, but it will be in the future -- say in 2025 when we have multiple seasons, we will essentially replace the league data every year. But is this fine? I suppose people won't care about the previous season anymore unless they really do.
+                const SK = generateLeagueEntitySK(provider, leagueData.id);
+                const existingLeague = await this.getLeagueByPKandSK(tid, userPK, SK);
+                const share_id = existingLeague?.share_id ? existingLeague.share_id : this.generateShareId(league.league_key);
+                const putRequests = [{
+                    PutRequest: {
+                        Item: {
+                            PK: userPK,
+                            SK,
+                            entity_type: "league",
+                            provider,
+                            created_at: new Date().toISOString(),
+                            end_week: 17, // assuming this
+                            logo_url: null, // I think there's a logo but idk where it is
+                            is_finished: false, // TODO: Probably need a way to calculate this
+                            league_id: leagueData.id,
+                            share_id,
+                            league_key: leagueData.id,
+                            season: leagueData.seasonId,
+                            name: leagueData.settings.name,
+                            league_type: "public", // we know it's public now but that will change when we add private support
+                            current_week: 0, // we don't really use it anyways since we just pull it from the API on request anyways when generating awards
                         }
-                    }];
+                    }
+                }];
                 // Perform batch write
                 const params = {
                     RequestItems: {
                         "ffawards": putRequests
                     }
                 };
-    
+
                 await this.dynamoDocClient.send(new BatchWriteCommand(params));
                 return;
             }
@@ -68,34 +71,37 @@ class LeagueService {
         try {
             if (leagueData) {
                 logger.debug({ leagueData }, "Creating league in database for sleeper.");
-                    const SK = generateLeagueEntitySK(provider, leagueData.league_id);
-                    const putRequests = [{
-                        PutRequest: {
-                            Item: {
-                                PK: userPK,
-                                SK,
-                                entity_type: "league",
-                                provider,
-                                created_at: new Date().toISOString(),
-                                end_week: 17, // assuming this
-                                logo_url: leagueData.avatar,
-                                is_finished: leagueData.status === "complete", // TODO: Check if pre_draft or draft earlier
-                                league_id: leagueData.league_id,
-                                league_key: leagueData.league_id,
-                                season: leagueData.season,
-                                name: leagueData.name,
-                                league_type: "public", // assuming -- given that the API is public anyways...
-                                current_week: 0, // assuming this -- we don't really use it anyways.
-                            }
+                const SK = generateLeagueEntitySK(provider, leagueData.league_id);
+                const existingLeague = await this.getLeagueByPKandSK(tid, userPK, SK);
+                const share_id = existingLeague?.share_id ? existingLeague.share_id : this.generateShareId(leagueData.league_id);
+                const putRequests = [{
+                    PutRequest: {
+                        Item: {
+                            PK: userPK,
+                            SK,
+                            entity_type: "league",
+                            provider,
+                            created_at: new Date().toISOString(),
+                            end_week: 17, // assuming this
+                            logo_url: leagueData.avatar,
+                            is_finished: leagueData.status === "complete", // TODO: Check if pre_draft or draft earlier
+                            league_id: leagueData.league_id,
+                            league_key: leagueData.league_id,
+                            share_id,
+                            season: leagueData.season,
+                            name: leagueData.name,
+                            league_type: "public", // assuming -- given that the API is public anyways...
+                            current_week: 0, // assuming this -- we don't really use it anyways.
                         }
-                    }];
+                    }
+                }];
                 // Perform batch write
                 const params = {
                     RequestItems: {
                         "ffawards": putRequests
                     }
                 };
-    
+
                 await this.dynamoDocClient.send(new BatchWriteCommand(params));
                 return;
             }
@@ -124,28 +130,33 @@ class LeagueService {
         try {
             if (leagueData?.length) {
                 logger.debug({ leagueData }, "Creating league(s) in database.");
-                const putRequests = leagueData.map(league => {
+                const putRequests = [];
+                for (let i = 0; i < leagueData.length; i++) {
+                    const league = leagueData[i];
                     const SK = generateLeagueEntitySK(provider, league.league_key);
-                    return {
+                    const existingLeague = await this.getLeagueByPKandSK(tid, userPK, SK);
+                    const share_id = existingLeague?.share_id ? existingLeague.share_id : this.generateShareId(league.league_key);
+                    putRequests.push({
                         PutRequest: {
                             Item: {
                                 PK: userPK,
                                 SK,
+                                share_id,
                                 entity_type: "league",
                                 provider,
                                 created_at: new Date().toISOString(),
                                 ...league // Spread existing league data
                             }
                         }
-                    };
-                });
+                    });
+                }
                 // Perform batch write
                 const params = {
                     RequestItems: {
                         "ffawards": putRequests
                     }
                 };
-    
+
                 await this.dynamoDocClient.send(new BatchWriteCommand(params));
                 return;
             }
@@ -214,6 +225,48 @@ class LeagueService {
         return result.Items[0];
     }
 
+    async getLeagueByPKandSK(tid, PK, SK) {
+        const logger = setupLoggerWrapper({ trackingId: tid }, "league", { __filename });
+        let result;
+        try {
+            const command = new GetCommand({
+                TableName: "ffawards",
+                Key: { PK, SK }
+            });
+            result = await this.dynamoDocClient.send(command);
+        } catch (err) {
+            logger.error({ err }, "Failed to query leagues by user ID and season.");
+            throw new ApiError("Failed to get league.");
+        }
+        logger.debug("Leagues retrieved successfully.");
+        return result?.Item;
+    }
+
+    async getLeagueByShareId(tid, shareId) {
+        const logger = setupLoggerWrapper({ trackingId: tid }, "league", { __filename });
+        let result;
+        try {
+            const command = new QueryCommand({
+                TableName: "ffawards",
+                IndexName: "GSI_ShareId",
+                KeyConditionExpression: "share_id = :share_id",
+                ExpressionAttributeValues: {
+                    ":share_id": shareId
+                },
+                Limit: 1
+            });
+            result = await this.dynamoDocClient.send(command);
+        } catch (err) {
+            logger.error({ err }, "Failed to query leagues by share id.");
+            throw new ApiError("Failed to get league by this share id");
+        }
+        logger.debug({ leagueCount: result.Items.length }, "Leagues retrieved successfully.");
+        if (!result.Items.length) {
+            throw new ApiError("League not found.", tid, null, 404);
+        }
+        return result.Items[0];
+    }
+
     async deleteLeaguesByUserId(tid, userId) {
         const command = new DeleteCommand({
             TableName: "ffawards",
@@ -223,6 +276,47 @@ class LeagueService {
             }
         });
         await this.dynamoDocClient.send(command);
+    }
+
+    async updateLeagueWithShareId(tid, userPK, leagueSK) {
+        const logger = setupLoggerWrapper({ trackingId: tid }, "league", { __filename });
+        const shareId = this.generateShareId(leagueSK);
+
+        try {
+            const command = new UpdateCommand({
+                TableName: "ffawards",
+                Key: {
+                    PK: userPK,
+                    SK: leagueSK
+                },
+                UpdateExpression: "SET share_id = :share_id",
+                ExpressionAttributeValues: {
+                    ":share_id": shareId
+                }
+            });
+
+            const result = await this.dynamoDocClient.send(command);
+            logger.debug({ result }, "League updated with a new share_id.");
+            return shareId;
+        } catch (err) {
+            logger.error({ err }, "Failed to update league with share_id.");
+            throw new ApiError("Failed to update league with share_id");
+        }
+    }
+
+    generateShareId(leagueId, length = 6) {
+        const chars = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const rand = randomBytes(16).toString('hex');
+        const hash = createHash('sha256').update(leagueId + rand).digest('hex');
+
+        let out = '';
+        let i = 0;
+        while (out.length < length) {
+            const n = parseInt(hash.slice(i, i + 2), 16);
+            out += chars[n % chars.length];
+            i += 2;
+        }
+        return out;
     }
 }
 

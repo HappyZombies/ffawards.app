@@ -13,13 +13,14 @@ class AwardsService {
         const client = new DynamoDBClient(dynamoConfig);
         this.dynamoDocClient = DynamoDBDocumentClient.from(client, {
             marshallOptions: { removeUndefinedValues: true }
-          });
+        });
     }
 
     async retrieveLeagueAwards(tid, provider, leagueKey) {
         const logger = setupLoggerWrapper({ trackingId: tid }, "retrieveLeagueAwards", { __filename });
         let result;
         const PK = generateLeagueEntitySK(provider, leagueKey);
+        logger.trace({ PK }, "PK to use for this query");
         try {
             const command = new QueryCommand({
                 TableName: "ffawards",
@@ -35,7 +36,7 @@ class AwardsService {
             throw new ApiError("Failed to get leagues by user ID and season.", tid);
         }
         const awards = result.Items;
-        logger.debug({ leagueCount: awards.length }, "Leagues retrieved successfully.");
+        logger.debug({ leagueCount: awards.length }, "League awards retrieved successfully.");
         const sortedAwards = awards.sort((a, b) => a.display_order - b.display_order);
         return sortedAwards;
     }
@@ -66,31 +67,31 @@ class AwardsService {
                     continue;
                 }
                 leagueAwardsPutRequests.push({
-                        PutRequest: {
-                            Item: {
-                                PK,
-                                SK: generateAccumulativeAwardSK(defaultAward.id),
-                                entity_type: "award",
-                                created_at: new Date().toISOString(),
-                                name: defaultAward.name,
-                                description: defaultAward.description,
-                                award_data,
-                                award_data_weekly,
-                                player_data,
-                                variants,
-                                display_order: defaultAward.displayOrder
-                            }
+                    PutRequest: {
+                        Item: {
+                            PK,
+                            SK: generateAccumulativeAwardSK(defaultAward.id),
+                            entity_type: "award",
+                            created_at: new Date().toISOString(),
+                            name: defaultAward.name,
+                            description: defaultAward.description,
+                            award_data,
+                            award_data_weekly,
+                            player_data,
+                            variants,
+                            display_order: defaultAward.displayOrder
                         }
-                    });
-            }
-                // Perform batch write
-                const params = {
-                    RequestItems: {
-                        "ffawards": leagueAwardsPutRequests
                     }
-                };
-                logger.info({ msg: "Generating default awards", params });
-                await this.dynamoDocClient.send(new BatchWriteCommand(params));
+                });
+            }
+            // Perform batch write
+            const params = {
+                RequestItems: {
+                    "ffawards": leagueAwardsPutRequests
+                }
+            };
+            logger.info({ msg: "Generating default awards", params });
+            await this.dynamoDocClient.send(new BatchWriteCommand(params));
 
             logger.info({ msg: "Default awards generated", leagueKey, userId, leagueAwards });
         } catch (err) {
