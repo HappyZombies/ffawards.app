@@ -3,6 +3,7 @@ import { Box, Typography, Button } from '@mui/material';
 import { useNavigate, Link } from 'react-router-dom';
 import KofiButton from "kofi-button";
 import { useAuth } from './AuthProvider';
+import Demo from './Demo';
 
 function Home() {
     const { isAuthenticated } = useAuth();
@@ -57,36 +58,40 @@ function Home() {
     };
 
     return (
-        <Box
-            sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '80vh',
-                textAlign: 'center',
-                gap: 2
-            }}
-        >
-            <Typography>Welcome to</Typography>
-            <Typography variant="h3" color='secondary'>FFAwards</Typography>
-            <Typography variant="body1" sx={{ maxWidth: 600, marginBottom: 2 }}>
-                FFAwards is a free fantasy football tool that delivers unique and engaging insights by analyzing real-time league data, helping users discover fun 'awards' to learn more about their fantasy football league.
-            </Typography>
+        <>
+            <Box
+                sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                    gap: 1
+                }}
+            >
+                <Typography>Welcome to</Typography>
+                <Typography variant="h3" color='secondary'>FFAwards</Typography>
+                <Typography variant="body1" sx={{ maxWidth: 600, marginBottom: 2 }}>
+                    FFAwards is a free fantasy football tool that delivers unique and engaging insights by analyzing real-time league data, helping users discover fun 'awards' to learn more about their fantasy football league.
+                </Typography>
 
-            <Typography variant="body1" sx={{ maxWidth: 600, marginBottom: 2 }}>
-                Let's get started! Select one of the league services below.
-            </Typography>
+                <Typography variant="body1" sx={{ maxWidth: 600, marginBottom: 2 }}>
+                    Let's get started! Select one of the league services below.
+                </Typography>
 
-            {displayCTA()}
+                {displayCTA()}
 
+                <br />
+                <KofiButton color="#0a9396" title="Support FFAwards" kofiID="T6T7134H7O" />
+
+            </Box>
             <br />
-            <KofiButton color="#0a9396" title="Support FFAwards" kofiID="T6T7134H7O" />
-
-            <Typography variant="body1" sx={{ marginTop: 2 }}>
-                Want to see a demo? Check out our <Link to="/demo">Demo Page</Link>!
-            </Typography>
-        </Box>
+            <br />
+            <br />
+            <Demo />
+            <br />
+            <br />
+        </>
     );
 }
 

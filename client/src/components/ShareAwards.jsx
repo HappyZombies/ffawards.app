@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { jsPDF } from 'jspdf';
 import { toPng } from 'html-to-image';
 import axios from 'axios';
 import './Leaderboard.css';

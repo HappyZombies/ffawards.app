@@ -23,7 +23,6 @@ function Nav() {
     const displayLoggedOutNav = () => (
         <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 2 }}>
             <Button component={Link} to="/" color="primary">Home</Button>
-            <Button component={Link} to="/demo" color="primary">Demo/Example</Button>
             <Button component={Link} to="/about" color="primary">Support FFAwards</Button>
         </Box>
     );
@@ -53,11 +52,6 @@ function Nav() {
             <ListItem disablePadding>
                 <ListItemButton component={Link} to="/">
                     <ListItemText primary="Home" sx={{ color: 'white' }} />
-                </ListItemButton>
-            </ListItem>
-            <ListItem disablePadding>
-                <ListItemButton component={Link} to="/demo">
-                    <ListItemText primary="Demo/Example" sx={{ color: 'white' }} />
                 </ListItemButton>
             </ListItem>
             <ListItem disablePadding>
