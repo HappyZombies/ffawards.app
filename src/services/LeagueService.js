@@ -24,7 +24,7 @@ class LeagueService {
                 // It's not a problem today, but it will be in the future -- say in 2025 when we have multiple seasons, we will essentially replace the league data every year. But is this fine? I suppose people won't care about the previous season anymore unless they really do.
                 const SK = generateLeagueEntitySK(provider, leagueData.id);
                 const existingLeague = await this.getLeagueByPKandSK(tid, userPK, SK);
-                const share_id = existingLeague?.share_id ? existingLeague.share_id : this.generateShareId(league.league_key);
+                const share_id = existingLeague?.share_id ? existingLeague.share_id : this.generateShareId(leagueData.id);
                 const putRequests = [{
                     PutRequest: {
                         Item: {
