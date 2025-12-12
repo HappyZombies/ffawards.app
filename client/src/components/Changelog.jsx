@@ -57,6 +57,7 @@ const changelogData = [
             'Added new Insight view.',
             'Added new export to image button.',
             'Small improvements to week view navigation.',
+            'Improve Average Award data to use whatever the league provider assumes is the current week of a matchup.',
             'Added Share Results Copy & Paste Text',
             'Added Public Share Link Page',
         ],
